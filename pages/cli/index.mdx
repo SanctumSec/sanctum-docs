@@ -1,0 +1,64 @@
+# CLI Reference
+
+The `sanctum` CLI is the primary interface for managing your vault, credentials, agents, and policies.
+
+## Global Options
+
+| Flag | Description |
+|------|-------------|
+| `--vault-path <path>` | Override default vault location (`~/.sanctum/`) |
+| `--verbose` / `-v` | Enable verbose output |
+| `--json` | Output in JSON format (for scripting) |
+| `--version` | Print version |
+| `--help` / `-h` | Print help |
+
+## Commands
+
+### Vault Management
+
+| Command | Description |
+|---------|-------------|
+| [`sanctum init`](/cli/init) | Initialize a new vault |
+| `sanctum daemon start` | Start the background daemon |
+| `sanctum daemon stop` | Stop the daemon |
+| `sanctum daemon status` | Check daemon status |
+
+### Credential Operations
+
+| Command | Description |
+|---------|-------------|
+| [`sanctum store`](/cli/store) | Store a credential |
+| [`sanctum get`](/cli/get) | Retrieve a credential |
+| [`sanctum list`](/cli/list) | List all credentials |
+| `sanctum remove <path>` | Delete a credential |
+
+### Agent Management
+
+| Command | Description |
+|---------|-------------|
+| [`sanctum agent register`](/cli/agent) | Register a new agent identity |
+| [`sanctum agent list`](/cli/agent) | List registered agents |
+| [`sanctum agent remove`](/cli/agent) | Deregister an agent |
+
+### Policy Management
+
+| Command | Description |
+|---------|-------------|
+| [`sanctum policy add`](/cli/policy) | Create an access policy |
+| [`sanctum policy list`](/cli/policy) | List policies |
+| [`sanctum policy remove`](/cli/policy) | Delete a policy |
+| [`sanctum policy simulate`](/cli/policy) | Test a policy decision |
+
+### MCP & Integration
+
+| Command | Description |
+|---------|-------------|
+| [`sanctum mcp serve`](/cli/mcp-serve) | Start the MCP server (stdio) |
+| [`sanctum export`](/cli/export) | Export audit events |
+
+### Audit
+
+| Command | Description |
+|---------|-------------|
+| `sanctum audit log` | View audit entries |
+| `sanctum audit verify` | Verify HMAC chain integrity |

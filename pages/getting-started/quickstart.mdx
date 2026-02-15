@@ -1,0 +1,93 @@
+# Quickstart
+
+Initialize your vault and store your first secrets.
+
+## Initialize Your Vault
+
+Create an encrypted vault to store credentials:
+
+```bash
+sanctum init
+```
+
+You'll be prompted to create a master password. This encrypts your vault's master key — choose something strong.
+
+```
+🔐 Creating new Sanctum vault...
+   Location: ~/.sanctum/
+
+Enter master password: ********
+Confirm master password: ********
+
+✅ Vault initialized successfully.
+   - Master key encrypted with AES-256-GCM
+   - Audit log initialized with HMAC chain
+   - Ready to store credentials
+```
+
+
+> **Note:**
+**What just happened?** Sanctum created `~/.sanctum/` with an encrypted master key, empty credential store, and a tamper-evident audit log. Nothing is stored in plaintext — ever.
+
+
+## Store Your First Secret
+
+Store an OpenAI API key:
+
+```bash
+sanctum store openai/api_key \
+  --type api_key \
+  --description "OpenAI production key"
+```
+
+Sanctum prompts for the value securely (it won't echo to your terminal):
+
+```
+Enter secret value:
+✅ Stored 'openai/api_key'
+   Type: api_key
+   Encrypted: AES-256-GCM (unique DEK)
+```
+
+Store a few more:
+
+```bash
+sanctum store anthropic/api_key --type api_key --description "Anthropic API key"
+sanctum store github/token --type api_key --description "GitHub PAT"
+```
+
+## List & Retrieve
+
+List everything in the vault:
+
+```bash
+sanctum list
+```
+
+```
+┌─────────────────────┬──────────┬──────────────────────────┬─────────────────────┐
+│ Name                │ Type     │ Description              │ Created             │
+├─────────────────────┼──────────┼──────────────────────────┼─────────────────────┤
+│ openai/api_key      │ api_key  │ OpenAI production key    │ 2026-02-10 23:15:00 │
+│ anthropic/api_key   │ api_key  │ Anthropic API key        │ 2026-02-10 23:15:30 │
+│ github/token        │ api_key  │ GitHub PAT               │ 2026-02-10 23:16:00 │
+└─────────────────────┴──────────┴──────────────────────────┴─────────────────────┘
+```
+
+Retrieve a secret:
+
+```bash
+sanctum get openai/api_key
+```
+
+```
+sk-proj-abc123...
+```
+
+> **Note:**
+`sanctum get` outputs the raw value to stdout. Use this for verification or piping. Your AI agents should access secrets through the MCP server instead — it enforces policies and creates audit entries.
+
+
+## Next Step
+
+→ [Your First Credential: Register an agent and set policies](/getting-started/first-credential)

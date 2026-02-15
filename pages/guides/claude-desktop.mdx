@@ -1,0 +1,90 @@
+# Claude Desktop Setup
+
+Connect SanctumAI to Claude Desktop so Claude can securely access your credentials.
+
+## Prerequisites
+
+- SanctumAI CLI installed ([Installation guide](/getting-started/installation))
+- Vault initialized with at least one credential
+- An agent registered and a policy created
+- [Claude Desktop](https://claude.ai/download) installed
+
+## Step 1: Register an Agent
+
+```bash
+sanctum agent register claude-desktop --description "Claude Desktop"
+```
+
+## Step 2: Create a Policy
+
+```bash
+sanctum policy add claude-desktop-access \
+  --principal "agent:claude-desktop" \
+  --resources "openai/*,anthropic/*" \
+  --actions retrieve \
+  --max-ttl 600
+```
+
+## Step 3: Configure Claude Desktop
+
+Edit the Claude Desktop config file:
+
+**macOS:**
+```bash
+code ~/Library/Application\ Support/Claude/claude_desktop_config.json
+```
+
+**Windows:**
+```
+%APPDATA%\Claude\claude_desktop_config.json
+```
+
+Add the SanctumAI MCP server:
+
+```json
+{
+  "mcpServers": {
+    "sanctum": {
+      "command": "sanctum",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
+```
+
+
+> **Note:**
+On macOS, ensure `sanctum` is in a PATH that Claude Desktop can access. If installed via cargo, the default location (`~/.cargo/bin/sanctum`) should work. If not, use the full path.
+
+
+## Step 4: Start the Daemon
+
+```bash
+sanctum daemon start
+```
+
+## Step 5: Restart Claude Desktop
+
+Quit and reopen Claude Desktop. Click the 🔌 (plug) icon in the bottom-left to verify "sanctum" appears as a connected MCP server.
+
+## Step 6: Test
+
+Ask Claude:
+
+> "List the credentials available in my Sanctum vault"
+
+Claude should call `sanctum_list_credentials` and show you the credentials your policy allows.
+
+Then:
+
+> "Get my OpenAI API key from Sanctum and tell me its first few characters"
+
+Claude will call `sanctum_get_credential`, receive a time-limited lease, and report the result.
+
+## Verify in Audit Log
+
+```bash
+sanctum audit log --agent claude-desktop --last 5
+```
+
+You should see the retrieve operation logged with the agent identity.

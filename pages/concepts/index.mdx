@@ -1,0 +1,37 @@
+# Core Concepts
+
+SanctumAI is built around six core concepts that work together to provide secure credential management for AI agents.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                        VAULT                             │
+│  ┌───────────┐  ┌───────────┐  ┌──────────────────────┐ │
+│  │Credentials│  │  Agents   │  │     Policies         │ │
+│  │ (secrets) │  │(identities│  │ (access rules)       │ │
+│  │           │  │           │  │                      │ │
+│  └─────┬─────┘  └─────┬─────┘  └──────────┬───────────┘ │
+│        │              │                    │             │
+│        └──────────────┼────────────────────┘             │
+│                       │                                  │
+│              ┌────────▼─────────┐                        │
+│              │  Audit Events    │                        │
+│              │  (HMAC chain)    │                        │
+│              └──────────────────┘                        │
+└─────────────────────────────────────────────────────────┘
+                        │
+               CRP (resolution)
+                        │
+                ┌───────▼────────┐
+                │  Export Layer   │
+                │ (SIEM, S3, ...)│
+                └────────────────┘
+```
+
+## Concepts
+
+- **[Vaults](/concepts/vaults)** — Encrypted containers that hold everything. AES-256-GCM envelope encryption.
+- **[Credentials](/concepts/credentials)** — The secrets themselves: API keys, tokens, passwords, certificates.
+- **[Agents](/concepts/agents)** — AI agent identities with Ed25519 keypairs for authentication.
+- **[Policies](/concepts/policies)** — Deny-by-default access rules with glob patterns, TTLs, and rate limits.
+- **[Audit Events](/concepts/audit)** — Tamper-evident HMAC-chained log of every operation.
+- **[CRP](/concepts/crp)** — Credential Resolution Protocol: how agents discover and retrieve secrets at runtime.

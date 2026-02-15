@@ -1,0 +1,110 @@
+# Go SDK
+
+The Go SDK (`sanctum-sdk-go`) wraps SanctumAI's C FFI layer via CGo. Prebuilt native libraries are included.
+
+## Install
+
+```bash
+go get github.com/SanctumSec/sanctum-sdk-go@v0.3.0
+```
+
+Requires CGo (enabled by default).
+
+## Quick Start
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    sanctum "github.com/SanctumSec/sanctum-sdk-go"
+)
+
+func main() {
+    vault, err := sanctum.Init("/tmp/my-vault", []byte("strong-passphrase"))
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer vault.Close()
+
+    // Store
+    err = vault.Store("OPENAI_API_KEY", []byte("sk-abc123..."), "my-agent", "")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Retrieve
+    secret, err := vault.Retrieve("OPENAI_API_KEY", "my-agent")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Got: %s\n", secret)
+
+    // List (returns JSON)
+    creds, _ := vault.ListCredentials("my-agent")
+    fmt.Printf("Credentials: %s\n", creds)
+
+    // Audit log (returns JSON)
+    auditLog, _ := vault.AuditLog("")
+    fmt.Printf("Audit: %s\n", auditLog)
+
+    // Delete
+    vault.Delete("OPENAI_API_KEY", "my-agent")
+}
+```
+
+## Opening an Existing Vault
+
+```go
+vault, err := sanctum.Open("/tmp/my-vault", []byte("strong-passphrase"))
+if err != nil {
+    log.Fatal(err)
+}
+defer vault.Close()
+```
+
+## Policy Enforcement
+
+```go
+policy := `{
+    "name": "openai-chatbot-only",
+    "principal": "agent:chatbot-*",
+    "resources": ["OPENAI_*"],
+    "actions": ["retrieve"],
+    "max_lease_ttl": 3600,
+    "conditions": {},
+    "enabled": true
+}`
+vault.Store("OPENAI_API_KEY", []byte("sk-abc123..."), "chatbot-v2", policy)
+
+// Check access
+err = vault.CheckPolicy("OPENAI_API_KEY", "chatbot-v2")
+if err == nil {
+    fmt.Println("Access allowed")
+}
+```
+
+## Error Handling
+
+The SDK provides typed sentinel errors:
+
+```go
+_, err := vault.Retrieve("nonexistent", "my-agent")
+switch {
+case errors.Is(err, sanctum.ErrNotFound):
+    fmt.Println("Credential not found")
+case errors.Is(err, sanctum.ErrAccessDenied):
+    fmt.Println("Policy denied access")
+case errors.Is(err, sanctum.ErrNotInitialized):
+    fmt.Println("Vault not initialized")
+}
+```
+
+Available errors: `ErrNullPointer`, `ErrInvalidUTF8`, `ErrNotInitialized`, `ErrAccessDenied`, `ErrNotFound`, `ErrCrypto`, `ErrBufferTooSmall`, `ErrJSON`, `ErrPanic`, `ErrUnknown`.
+
+## Requirements
+
+- Go 1.21+
+- CGo enabled (default)

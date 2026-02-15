@@ -1,0 +1,77 @@
+# SanctumAI Documentation
+
+**The Identity Control Plane for Autonomous AI Agents.**
+
+SanctumAI is a credential management platform purpose-built for AI agents. It provides encrypted vaults, policy-controlled access, time-limited leases, and tamper-evident audit logging — so your AI tools get the secrets they need without the security risks of `.env` files.
+
+## Why SanctumAI?
+
+AI agents are the new workforce — but they access secrets like it's 2015. API keys in plaintext files, tokens in environment variables, no audit trail, no access control. SanctumAI fixes this:
+
+- **Encrypted at rest** — AES-256-GCM envelope encryption. No plaintext, ever.
+- **Policy engine** — Deny-by-default. Agents only access what they're explicitly allowed.
+- **Time-limited leases** — Secrets expire automatically. No lingering credentials.
+- **Tamper-evident audit** — HMAC-chained log. Every access recorded and verifiable.
+- **MCP native** — Works with Cursor, Claude Desktop, Claude Code, Windsurf, VS Code.
+- **Local-first** — Your secrets never leave your machine. No cloud dependency.
+
+## Quick Start
+
+Get from zero to a working vault in under 10 minutes:
+
+```bash
+# Install
+cargo install sanctum
+
+# Create a vault
+sanctum init
+
+# Store a secret
+sanctum store openai/api_key --type api_key
+
+# Register an AI agent
+sanctum agent register cursor-agent
+
+# Grant access
+sanctum policy add cursor-access \
+  --principal "agent:cursor-agent" \
+  --resources "openai/*" \
+  --actions retrieve
+
+# Connect to your AI editor
+sanctum mcp serve
+```
+
+→ [Full Getting Started Guide](/getting-started)
+
+## Architecture at a Glance
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   AI Editors                         │
+│  Cursor · Claude Desktop · Claude Code · Windsurf   │
+│                                                      │
+│         MCP (Model Context Protocol)                 │
+└──────────────────────┬──────────────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────────────┐
+│                   SanctumAI                          │
+│  ┌──────────┐ ┌──────────┐ ┌──────────────────────┐ │
+│  │ Policy   │ │ Lease    │ │ Audit Log            │ │
+│  │ Engine   │ │ Manager  │ │ (HMAC chain)         │ │
+│  └──────────┘ └──────────┘ └──────────────────────┘ │
+│  ┌─────────────────────────────────────────────────┐ │
+│  │          Encrypted Vault (AES-256-GCM)          │ │
+│  └─────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────┘
+```
+
+## SDKs & Tools
+
+| Tool | Install | Language |
+|------|---------|----------|
+| CLI | `cargo install sanctum` | Rust binary |
+| Rust SDK | `cargo add sanctum-ai` | Rust |
+| Python SDK | `pip install sanctum-ai` | Python 3.9+ |
+| Node SDK | `npm install sanctum-ai` | Node 16+ / TypeScript |
+| Go SDK | `go get github.com/SanctumSec/sanctum-sdk-go` | Go 1.21+ |

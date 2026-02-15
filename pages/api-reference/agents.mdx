@@ -1,0 +1,61 @@
+# Agents API
+
+## List Agents
+
+```
+GET /api/v1/agents
+```
+
+**Response:**
+
+```json
+{
+  "data": [
+    {
+      "name": "cursor-agent",
+      "description": "Cursor AI editor",
+      "public_key": "dwP8...k4Fm",
+      "registered_at": "2026-02-10T23:18:00Z"
+    }
+  ]
+}
+```
+
+## Register Agent
+
+```
+POST /api/v1/agents
+```
+
+**Body:**
+
+```json
+{
+  "name": "cursor-agent",
+  "description": "Cursor AI editor"
+}
+```
+
+**Response:** `201 Created`
+
+```json
+{
+  "data": {
+    "name": "cursor-agent",
+    "public_key": "dwP8...k4Fm",
+    "registered_at": "2026-02-10T23:18:00Z"
+  }
+}
+```
+
+An Ed25519 keypair is generated server-side. The private key is stored in `~/.sanctum/agents/<name>/`.
+
+## Remove Agent
+
+```
+DELETE /api/v1/agents/:name
+```
+
+Deregisters the agent and immediately revokes all active leases.
+
+**Response:** `204 No Content`

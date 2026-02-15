@@ -1,0 +1,71 @@
+# Credential Resolution Protocol (CRP)
+
+CRP is the protocol by which AI agents discover, request, and receive credentials from SanctumAI at runtime. It's the glue between the MCP tool interface and the vault's policy engine.
+
+## How CRP Works
+
+When an AI agent needs a secret, the following sequence occurs:
+
+```
+AI Agent (via MCP)                    SanctumAI Daemon
+       │                                     │
+       │  1. sanctum_list_credentials()      │
+       │────────────────────────────────────▶│
+       │         [available credentials]     │
+       │◀────────────────────────────────────│
+       │                                     │
+       │  2. sanctum_get_credential(path)    │
+       │────────────────────────────────────▶│
+       │         │                           │
+       │         │  3. Authenticate agent    │
+       │         │     (Ed25519 challenge)   │
+       │         │                           │
+       │         │  4. Evaluate policies     │
+       │         │     (deny-by-default)     │
+       │         │                           │
+       │         │  5. Create lease          │
+       │         │     (time-limited)        │
+       │         │                           │
+       │    { value, lease_id, expires_at }  │
+       │◀────────────────────────────────────│
+       │                                     │
+       │  6. Use credential                  │
+       │                                     │
+       │  7. Lease expires → value zeroized  │
+```
+
+## Resolution Steps
+
+1. **Discovery** — The agent calls `sanctum_list_credentials` to see what's available (filtered by its policies)
+2. **Request** — The agent requests a specific credential by path
+3. **Authentication** — The daemon verifies the agent's Ed25519 identity
+4. **Authorization** — The policy engine checks if any policy grants this agent access to this credential for this action
+5. **Lease Creation** — On success, a time-limited lease is created with the decrypted value
+6. **Usage** — The agent uses the credential value
+7. **Expiration** — When the lease TTL expires, the value is zeroized from daemon memory
+
+## MCP Tools
+
+CRP is exposed through MCP as a set of tools that AI editors can call:
+
+| Tool | Description |
+|------|-------------|
+| `sanctum_list_credentials` | List credentials the agent has access to |
+| `sanctum_get_credential` | Retrieve a credential value (creates a lease) |
+| `sanctum_store_credential` | Store a new credential |
+| `sanctum_delete_credential` | Delete a credential |
+| `sanctum_search_credentials` | Search credentials by pattern |
+| `sanctum_get_audit_log` | View recent audit entries |
+| `sanctum_check_policy` | Simulate a policy decision |
+
+## Why a Protocol?
+
+CRP exists because raw vault access isn't safe for AI agents. The protocol adds:
+
+- **Identity verification** — The agent must prove who it is before every request
+- **Policy enforcement** — Access is checked against the policy engine, not just "can you connect"
+- **Time-limiting** — Secrets are leased, not permanently exposed
+- **Audit trail** — Every resolution attempt is logged, whether it succeeds or fails
+- **Rate limiting** — Agents can't brute-force access to secrets
+
+Without CRP, an AI agent with MCP access would have unrestricted access to the entire vault — the equivalent of giving every employee the root password.

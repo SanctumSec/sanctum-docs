@@ -1,0 +1,105 @@
+# Node.js SDK
+
+The Node.js SDK (`sanctum-ai`) ships as a native addon via napi-rs — no compilation needed. Full TypeScript definitions included.
+
+## Install
+
+```bash
+npm install sanctum-ai
+```
+
+## Quick Start
+
+```javascript
+const { SanctumVault } = require('sanctum-ai');
+
+// Create a new vault
+const vault = SanctumVault.init('/tmp/my-vault', 'strong-passphrase');
+
+// Store a credential
+vault.store('OPENAI_API_KEY', 'sk-abc123...', 'my-agent');
+
+// Retrieve it
+const secret = vault.retrieve('OPENAI_API_KEY', 'my-agent');
+console.log(`Got: ${secret}`);
+
+// List all credentials
+const creds = vault.listCredentials('my-agent');
+for (const cred of creds) {
+  console.log(`  ${cred.path} (accessed ${cred.accessCount} times)`);
+}
+
+// Check the audit trail
+const entries = vault.auditLog();
+for (const entry of entries) {
+  console.log(`[${entry.agentName}] ${entry.action} → ${entry.resource}`);
+}
+
+// Delete a credential
+vault.delete('OPENAI_API_KEY', 'my-agent');
+```
+
+## TypeScript
+
+```typescript
+import { SanctumVault, CredentialInfo, AuditEntryJs } from 'sanctum-ai';
+
+const vault = SanctumVault.init('/tmp/my-vault', 'strong-passphrase');
+vault.store('OPENAI_API_KEY', 'sk-abc123...', 'my-agent');
+
+const creds: CredentialInfo[] = vault.listCredentials('my-agent');
+```
+
+## Opening an Existing Vault
+
+```javascript
+const vault = SanctumVault.open('/tmp/my-vault');
+vault.unlock('strong-passphrase');
+
+const secret = vault.retrieve('OPENAI_API_KEY', 'my-agent');
+
+// Lock when done
+vault.lock();
+```
+
+## Policy Enforcement
+
+```javascript
+vault.store('OPENAI_API_KEY', 'sk-abc123...', 'chatbot-v2', {
+  policyName: 'openai-chatbot-only',
+  principal: 'agent:chatbot-*',
+  actions: ['retrieve'],
+  maxLeaseTtl: 3600,
+});
+
+const decision = vault.checkPolicy('chatbot-v2', 'OPENAI_API_KEY');
+console.log(`Allowed: ${decision.allowed}`);
+
+const denied = vault.checkPolicy('rogue-agent', 'OPENAI_API_KEY');
+console.log(`Allowed: ${denied.allowed}`);  // false
+```
+
+## In-Memory Vault (Testing)
+
+```javascript
+const testVault = SanctumVault.openInMemory('test-pass');
+testVault.store('TEST_KEY', 'test-value', 'test-agent');
+```
+
+## Use with Vercel AI SDK
+
+```javascript
+const { SanctumVault } = require('sanctum-ai');
+const { openai } = require('@ai-sdk/openai');
+
+const vault = SanctumVault.open('~/.sanctum');
+vault.unlock(process.env.VAULT_PASSPHRASE);
+const apiKey = vault.retrieve('OPENAI_API_KEY', 'vercel-agent');
+
+const provider = openai({ apiKey });
+```
+
+## Requirements
+
+- Node.js 16+
+- No native dependencies to install

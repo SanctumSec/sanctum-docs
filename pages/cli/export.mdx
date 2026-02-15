@@ -1,0 +1,64 @@
+# sanctum export
+
+Export audit events to external systems.
+
+## Usage
+
+```bash
+sanctum export [OPTIONS]
+```
+
+## Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--format <fmt>` | Output format: `ocsf`, `cef`, `json`, `csv` | `json` |
+| `--since <time>` | Export events after this timestamp | all |
+| `--output <path>` | Write to file instead of stdout | stdout |
+| `--adapter <name>` | Stream to a configured adapter | none |
+
+## Formats
+
+### OCSF 1.3 (Open Cybersecurity Schema Framework)
+
+```bash
+sanctum export --format ocsf --since "2026-02-01"
+```
+
+Exports events in OCSF 1.3 JSON format, compatible with Amazon Security Lake, Splunk OCSF, and other OCSF-native tools.
+
+### CEF (Common Event Format)
+
+```bash
+sanctum export --format cef --output /var/log/sanctum/events.cef
+```
+
+For Splunk, QRadar, ArcSight, and syslog-based SIEMs.
+
+### JSON (Flat)
+
+```bash
+sanctum export --format json | jq '.[] | select(.action == "retrieve")'
+```
+
+### CSV
+
+```bash
+sanctum export --format csv --output events.csv
+```
+
+## Streaming to Adapters
+
+For continuous export, configure adapters in `~/.sanctum/config.toml` and use:
+
+```bash
+sanctum export --adapter splunk-prod
+```
+
+See the [Export to SIEM guide](/guides/export-siem) for full adapter configuration.
+
+## Export Layer Architecture
+
+The export layer supports pluggable adapters for: Splunk HEC, Datadog, Azure Sentinel, Google Chronicle, Elasticsearch, S3/Security Lake, Webhook, Syslog, OpenTelemetry OTLP, and local file output.
+
+Each adapter supports batching, retry with exponential backoff, and dead-letter queues for failed deliveries. See [Concepts → Audit Events](/concepts/audit) for the event schema.

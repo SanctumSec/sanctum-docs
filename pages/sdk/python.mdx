@@ -1,0 +1,109 @@
+# Python SDK
+
+The Python SDK (`sanctum-ai`) ships as a native wheel via PyO3 — no compilation needed.
+
+## Install
+
+```bash
+pip install sanctum-ai
+```
+
+Requires Python 3.9+.
+
+## Quick Start
+
+```python
+from sanctum_ai import Vault
+
+# Create a new vault
+vault = Vault.init("/tmp/my-vault", "strong-passphrase")
+
+# Store a credential
+vault.store("OPENAI_API_KEY", b"sk-abc123...", "my-agent")
+
+# Retrieve it
+secret = vault.retrieve("OPENAI_API_KEY", "my-agent")
+print(f"Got: {secret.decode()}")
+
+# List all credentials
+creds = vault.list("my-agent")
+print(f"Stored credentials: {creds}")
+
+# Check the audit trail
+entries = vault.audit_log(agent="my-agent")
+for entry in entries:
+    print(entry)
+
+# Delete a credential
+vault.delete("OPENAI_API_KEY", "my-agent")
+```
+
+## Opening an Existing Vault
+
+```python
+vault = Vault.open("/tmp/my-vault", "strong-passphrase")
+secret = vault.retrieve("OPENAI_API_KEY", "my-agent")
+```
+
+## Error Handling
+
+SanctumAI raises typed exceptions:
+
+```python
+from sanctum_ai import (
+    Vault,
+    SanctumError,       # Base exception
+    VaultLockedError,   # Vault not initialized or locked
+    AccessDeniedError,  # Policy violation
+    NotFoundError,      # Credential doesn't exist
+    AuthError,          # Wrong passphrase
+)
+
+try:
+    vault = Vault.open("/tmp/my-vault", "wrong-passphrase")
+except AuthError:
+    print("Wrong passphrase!")
+
+try:
+    vault.retrieve("nonexistent", "my-agent")
+except NotFoundError:
+    print("Credential not found!")
+
+try:
+    vault.retrieve("restricted-key", "unauthorized-agent")
+except AccessDeniedError:
+    print("Policy denied access!")
+```
+
+## Audit Log Queries
+
+```python
+# All entries
+entries = vault.audit_log()
+
+# Filter by agent
+entries = vault.audit_log(agent="my-agent")
+
+# Filter by action
+entries = vault.audit_log(action="retrieve")
+
+# Combine filters
+entries = vault.audit_log(agent="my-agent", action="store", limit=50)
+```
+
+## Use with LangChain / LlamaIndex
+
+```python
+from sanctum_ai import Vault
+import openai
+
+vault = Vault.open("~/.sanctum", "my-passphrase")
+api_key = vault.retrieve("OPENAI_API_KEY", "langchain-agent").decode()
+
+client = openai.OpenAI(api_key=api_key)
+```
+
+## Requirements
+
+- Python 3.9+
+- No runtime dependencies

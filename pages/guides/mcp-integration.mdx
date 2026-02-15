@@ -1,0 +1,84 @@
+# MCP Integration
+
+SanctumAI uses the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) to expose credential management as tools that AI editors can call. This guide covers how MCP works with Sanctum and advanced configuration options.
+
+## How It Works
+
+MCP is a JSON-RPC 2.0 protocol over stdio. Your AI editor launches `sanctum mcp serve` as a child process and communicates over stdin/stdout:
+
+```
+AI Editor ←── stdio (JSON-RPC 2.0) ──→ sanctum mcp serve ←── RPC ──→ Daemon
+```
+
+The MCP server translates tool calls into CRP requests against the daemon.
+
+## Available Tools
+
+When connected, your AI editor gains access to these tools:
+
+| Tool | Description |
+|------|-------------|
+| `sanctum_list_credentials` | List credentials the agent can access |
+| `sanctum_get_credential` | Retrieve a credential value |
+| `sanctum_store_credential` | Store a new credential |
+| `sanctum_delete_credential` | Delete a credential |
+| `sanctum_search_credentials` | Search by path pattern |
+| `sanctum_get_audit_log` | View recent audit entries |
+| `sanctum_check_policy` | Simulate a policy check |
+
+## Configuration
+
+The MCP server configuration is the same across all editors:
+
+```json
+{
+  "mcpServers": {
+    "sanctum": {
+      "command": "sanctum",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
+```
+
+### Custom Vault Path
+
+```json
+{
+  "mcpServers": {
+    "sanctum": {
+      "command": "sanctum",
+      "args": ["mcp", "serve", "--vault-path", "/path/to/vault"]
+    }
+  }
+}
+```
+
+## Security Model
+
+Every MCP tool call goes through the full CRP flow:
+
+1. **Agent identity** — The MCP server identifies which agent is calling (based on the registered agent for this editor)
+2. **Policy check** — The policy engine verifies the agent has access to the requested resource
+3. **Lease creation** — Approved requests get a time-limited lease
+4. **Audit logging** — Every request (allowed or denied) is recorded
+
+
+> **Note:**
+MCP access is strictly scoped. An agent can only see credentials that its policies allow — `sanctum_list_credentials` returns a filtered view, not the full vault.
+
+
+## Troubleshooting
+
+### MCP server not appearing in editor
+
+1. Verify the daemon is running: `sanctum daemon status`
+2. Check `sanctum` is in your PATH: `which sanctum`
+3. Restart the editor after adding MCP configuration
+4. Check editor logs for MCP connection errors
+
+### Permission denied on tool calls
+
+1. Verify agent is registered: `sanctum agent list`
+2. Check policies: `sanctum policy simulate --agent <name> --resource <path> --action retrieve`
+3. Review audit log for deny events: `sanctum audit log --denied --last 10`

@@ -1,0 +1,82 @@
+# Audit Events
+
+Every operation in SanctumAI is recorded in a tamper-evident audit log. The log uses HMAC chaining — each entry's hash includes the previous entry's hash, making it impossible to alter or delete records without detection.
+
+## What Gets Logged
+
+| Event | Description |
+|-------|-------------|
+| `credential.store` | A credential was created or updated |
+| `credential.retrieve` | A credential was accessed |
+| `credential.delete` | A credential was removed |
+| `credential.list` | Credential listing was requested |
+| `agent.register` | A new agent identity was created |
+| `agent.remove` | An agent was deregistered |
+| `policy.create` | A new policy was added |
+| `policy.delete` | A policy was removed |
+| `policy.deny` | An access request was denied by policy |
+| `vault.init` | Vault was initialized |
+| `vault.unlock` | Vault was unlocked |
+| `vault.lock` | Vault was locked |
+
+## Audit Entry Structure
+
+Each entry contains:
+
+| Field | Description |
+|-------|-------------|
+| `timestamp` | Microsecond-precision UTC timestamp |
+| `event_type` | Event classification (see above) |
+| `agent_name` | The agent or user that triggered the event |
+| `resource` | The credential path affected |
+| `action` | The operation performed |
+| `result` | `allowed` or `denied` |
+| `hmac` | HMAC-SHA256 of this entry + previous entry's HMAC |
+
+## HMAC Chain
+
+The chain provides **tamper evidence**. If any entry is modified or deleted, the chain breaks:
+
+```
+Entry 1: HMAC(key, data_1 || "")           → H1
+Entry 2: HMAC(key, data_2 || H1)           → H2
+Entry 3: HMAC(key, data_3 || H2)           → H3
+...
+```
+
+Verify the chain integrity:
+
+```bash
+sanctum audit verify
+```
+
+```
+✅ Audit log integrity verified
+   Entries: 1,247
+   Chain: valid (no gaps or modifications detected)
+   First entry: 2026-02-01 10:00:00 UTC
+   Last entry: 2026-02-14 22:30:00 UTC
+```
+
+## Querying the Log
+
+```bash
+# Last N entries
+sanctum audit log --last 20
+
+# Filter by agent
+sanctum audit log --agent cursor-agent
+
+# Filter by resource
+sanctum audit log --resource "openai/*"
+
+# Filter by action
+sanctum audit log --action retrieve
+
+# Denied requests only
+sanctum audit log --denied
+```
+
+## Export
+
+Audit events can be exported to external SIEM systems via the [Export Layer](/guides/export-siem). Supported formats include OCSF 1.3, CEF, and flat JSON. See the [Export to SIEM guide](/guides/export-siem) for setup.

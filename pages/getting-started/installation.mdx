@@ -1,0 +1,64 @@
+# Installation
+
+Install the `sanctum` CLI binary on your platform.
+
+## Cargo (recommended)
+
+If you have a Rust toolchain installed:
+
+```bash
+cargo install sanctum
+```
+
+## Homebrew (macOS / Linux)
+
+```bash
+brew install sanctumai/tap/sanctum
+```
+
+## Binary Download
+
+Download prebuilt binaries from [GitHub Releases](https://github.com/SanctumSec/sanctum/releases).
+
+### macOS (Apple Silicon)
+
+```bash
+curl -L https://github.com/SanctumSec/sanctum/releases/latest/download/sanctum-aarch64-apple-darwin.tar.gz | tar xz
+sudo mv sanctum /usr/local/bin/
+```
+
+### macOS (Intel)
+
+```bash
+curl -L https://github.com/SanctumSec/sanctum/releases/latest/download/sanctum-x86_64-apple-darwin.tar.gz | tar xz
+sudo mv sanctum /usr/local/bin/
+```
+
+### Linux (x86_64)
+
+```bash
+curl -L https://github.com/SanctumSec/sanctum/releases/latest/download/sanctum-x86_64-unknown-linux-gnu.tar.gz | tar xz
+sudo mv sanctum /usr/local/bin/
+```
+
+### Linux (ARM64)
+
+```bash
+curl -L https://github.com/SanctumSec/sanctum/releases/latest/download/sanctum-aarch64-unknown-linux-gnu.tar.gz | tar xz
+sudo mv sanctum /usr/local/bin/
+```
+
+### Windows (x86_64)
+
+Download `sanctum-x86_64-pc-windows-msvc.zip` from [Releases](https://github.com/SanctumSec/sanctum/releases), extract, and add to your PATH.
+
+## Verify Installation
+
+```bash
+sanctum --version
+# sanctum 0.3.0
+```
+
+## Next Step
+
+→ [Quickstart: Initialize your vault](/getting-started/quickstart)

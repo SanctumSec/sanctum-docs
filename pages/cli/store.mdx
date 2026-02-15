@@ -1,0 +1,51 @@
+# sanctum store
+
+Store a credential in the vault.
+
+## Usage
+
+```bash
+sanctum store <path> [OPTIONS]
+```
+
+## Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `path` | Credential path (e.g., `openai/api_key`) |
+
+## Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--type <type>` | Credential type (`api_key`, `token`, `password`, `certificate`, `ssh_key`, `oauth_token`) | `api_key` |
+| `--description <text>` | Human-readable description | none |
+| `--value <value>` | Secret value (⚠️ visible in shell history) | prompted securely |
+
+## Example
+
+```bash
+# Secure input (recommended)
+sanctum store openai/api_key --type api_key --description "OpenAI production key"
+
+# Piped input
+echo "sk-abc123" | sanctum store openai/api_key --type api_key
+```
+
+```
+Enter secret value:
+✅ Stored 'openai/api_key'
+   Type: api_key
+   Encrypted: AES-256-GCM (unique DEK)
+```
+
+
+> **Note:**
+Avoid `--value` in production — the secret will appear in your shell history. Use the interactive prompt or pipe from stdin instead.
+
+
+## Notes
+
+- Each credential gets a unique data encryption key (DEK)
+- If a credential with the same path exists, it will be updated (previous value overwritten)
+- The operation is recorded in the audit log as `credential.store`

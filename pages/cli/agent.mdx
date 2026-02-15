@@ -1,0 +1,65 @@
+# sanctum agent
+
+Manage AI agent identities.
+
+## Subcommands
+
+### register
+
+Register a new agent with a unique Ed25519 keypair.
+
+```bash
+sanctum agent register <name> [--description <text>]
+```
+
+```bash
+sanctum agent register cursor-agent --description "Cursor AI editor"
+```
+
+```
+✅ Agent 'cursor-agent' registered
+   Identity: Ed25519 keypair generated
+   Public key: dwP8...k4Fm
+   Config written to: ~/.sanctum/agents/cursor-agent/
+```
+
+### list
+
+List all registered agents.
+
+```bash
+sanctum agent list
+```
+
+```
+┌────────────────┬──────────────────────┬─────────────────────┐
+│ Name           │ Description          │ Registered          │
+├────────────────┼──────────────────────┼─────────────────────┤
+│ cursor-agent   │ Cursor AI editor     │ 2026-02-10 23:18:00 │
+│ claude-code    │ Claude Code          │ 2026-02-11 10:00:00 │
+└────────────────┴──────────────────────┴─────────────────────┘
+```
+
+### remove
+
+Deregister an agent and revoke all its active leases.
+
+```bash
+sanctum agent remove <name>
+```
+
+```bash
+sanctum agent remove cursor-agent
+```
+
+```
+⚠️  This will revoke all active leases for 'cursor-agent'.
+Continue? [y/N] y
+✅ Agent 'cursor-agent' removed
+```
+
+## Notes
+
+- Agent names support alphanumeric characters, hyphens, and underscores
+- Removing an agent immediately revokes all active leases and deletes the keypair
+- Agent names are used in policy `principal` fields with glob patterns (e.g., `agent:cursor-*`)

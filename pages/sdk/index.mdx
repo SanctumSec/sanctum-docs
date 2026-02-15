@@ -1,0 +1,35 @@
+# SDKs
+
+SanctumAI provides native SDKs for four languages. All SDKs wrap the same Rust core — they share identical encryption, policy enforcement, and audit logging.
+
+## Comparison
+
+| Feature | Rust | Python | Node.js | Go |
+|---------|------|--------|---------|-----|
+| Package | `sanctum-ai` | `sanctum-ai` | `sanctum-ai` | `sanctum-sdk-go` |
+| Registry | crates.io | PyPI | npm | Go modules |
+| Min version | 1.75+ | 3.9+ | 16+ | 1.21+ |
+| Binding | Native | PyO3 (native wheel) | napi-rs (native addon) | CGo (FFI) |
+| Async | No (sync API) | No | No | No |
+| Type-safe | ✅ | ✅ (typed exceptions) | ✅ (TypeScript) | ✅ (sentinel errors) |
+
+## Quick Links
+
+- [Rust SDK →](/sdk/rust)
+- [Python SDK →](/sdk/python)
+- [Node.js SDK →](/sdk/node)
+- [Go SDK →](/sdk/go)
+
+## Common Pattern
+
+All SDKs follow the same workflow:
+
+```
+1. Init or Open vault
+2. Store credentials
+3. Retrieve credentials (with agent identity)
+4. Query audit log
+5. Check policies
+```
+
+The API surface is intentionally identical across languages — if you know one SDK, you know them all.

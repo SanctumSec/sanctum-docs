@@ -1,0 +1,71 @@
+# API Reference
+
+SanctumAI exposes an HTTP admin API on localhost when the daemon is running. This API is used by the web dashboard and can be used for automation.
+
+## Base URL
+
+```
+http://localhost:7700/api/v1
+```
+
+The API is **localhost-only** by default. It does not listen on external interfaces.
+
+## Authentication
+
+All requests require a Bearer token:
+
+```bash
+curl -H "Authorization: Bearer <token>" http://localhost:7700/api/v1/credentials
+```
+
+The token is generated during `sanctum daemon start` and printed to stdout. It's also stored in `~/.sanctum/daemon.token`.
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| **Credentials** | | |
+| `GET` | `/credentials` | [List credentials](/api/credentials#list) |
+| `GET` | `/credentials/:path` | [Get credential](/api/credentials#get) |
+| `POST` | `/credentials` | [Store credential](/api/credentials#store) |
+| `DELETE` | `/credentials/:path` | [Delete credential](/api/credentials#delete) |
+| **Agents** | | |
+| `GET` | `/agents` | [List agents](/api/agents#list) |
+| `POST` | `/agents` | [Register agent](/api/agents#register) |
+| `DELETE` | `/agents/:name` | [Remove agent](/api/agents#remove) |
+| **Policies** | | |
+| `GET` | `/policies` | [List policies](/api/policies#list) |
+| `POST` | `/policies` | [Create policy](/api/policies#create) |
+| `DELETE` | `/policies/:name` | [Delete policy](/api/policies#delete) |
+| `POST` | `/policies/simulate` | [Simulate policy](/api/policies#simulate) |
+| **Audit** | | |
+| `GET` | `/audit` | [Query audit log](/api/audit#query) |
+| `GET` | `/audit/verify` | [Verify chain integrity](/api/audit#verify) |
+| **Auth** | | |
+| `POST` | `/auth/challenge` | [Request auth challenge](/api/authentication#challenge) |
+| `POST` | `/auth/verify` | [Verify challenge response](/api/authentication#verify) |
+
+## Response Format
+
+All responses are JSON:
+
+```json
+{
+  "data": { ... },
+  "meta": {
+    "request_id": "550e8400-e29b-41d4-a716-446655440000",
+    "timestamp": "2026-02-14T22:30:00Z"
+  }
+}
+```
+
+Errors return:
+
+```json
+{
+  "error": {
+    "code": "ACCESS_DENIED",
+    "message": "Policy does not grant access to this resource"
+  }
+}
+```

@@ -1,0 +1,129 @@
+# Connect to AI Tool
+
+Wire up SanctumAI to your AI editor via MCP (Model Context Protocol).
+
+## Start the Daemon
+
+```bash
+sanctum daemon start
+```
+
+```
+✅ Daemon started
+   RPC: localhost:7600
+   Web dashboard: http://localhost:7700
+```
+
+## Configure Your Editor
+
+### Cursor
+
+Create or edit `.cursor/mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "sanctum": {
+      "command": "sanctum",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
+```
+
+Restart Cursor. You should see "sanctum" in Settings → MCP.
+
+### Claude Desktop
+
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "sanctum": {
+      "command": "sanctum",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
+```
+
+Restart Claude Desktop. The 🔌 icon should show Sanctum connected.
+
+### Claude Code
+
+Claude Code discovers MCP servers automatically. Add to your project's `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "sanctum": {
+      "command": "sanctum",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
+```
+
+### Windsurf
+
+Edit `~/.windsurf/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "sanctum": {
+      "command": "sanctum",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
+```
+
+Restart Windsurf.
+
+### VS Code
+
+For VS Code with Continue or Copilot MCP support, add to `.vscode/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "sanctum": {
+      "command": "sanctum",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
+```
+
+## Test the Connection
+
+Ask your AI assistant:
+
+> "Use Sanctum to get my OpenAI API key and make a test request"
+
+The agent will:
+1. Authenticate with its Ed25519 keypair
+2. Request `openai/api_key` through MCP
+3. Receive a time-limited lease (expires per your policy)
+4. Use the key for the API call
+
+## Verify in the Audit Log
+
+```bash
+sanctum audit log --last 5
+```
+
+Every MCP access is recorded with the agent identity, resource accessed, and result.
+
+> **Web Dashboard:** Open `http://localhost:7700` for real-time lease monitoring, policy simulation, and visual audit log.
+
+## You're Done! 🎉
+
+You now have a working SanctumAI vault with policy-controlled access for your AI editor. Next steps:
+
+- [Concepts](/concepts) — Understand vaults, policies, and CRP in depth
+- [CLI Reference](/cli) — Full command documentation
+- [SDK Guides](/sdk) — Integrate Sanctum into your own applications
+- [Guides](/guides) — Advanced integration recipes

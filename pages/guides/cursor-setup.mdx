@@ -1,0 +1,91 @@
+# Cursor Setup
+
+Connect SanctumAI to Cursor so your AI coding assistant can securely access credentials.
+
+## Prerequisites
+
+- SanctumAI CLI installed ([Installation guide](/getting-started/installation))
+- Vault initialized with credentials
+- [Cursor](https://cursor.sh) installed
+
+## Step 1: Register an Agent
+
+```bash
+sanctum agent register cursor-agent --description "Cursor AI editor"
+```
+
+## Step 2: Create a Policy
+
+```bash
+sanctum policy add cursor-access \
+  --principal "agent:cursor-agent" \
+  --resources "openai/*,anthropic/*" \
+  --actions retrieve \
+  --max-ttl 300
+```
+
+## Step 3: Configure Cursor
+
+Create `.cursor/mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "sanctum": {
+      "command": "sanctum",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
+```
+
+
+> **Note:**
+This is a per-project configuration. To use SanctumAI across all projects, create the file in your home directory or use Cursor's global MCP settings.
+
+
+## Step 4: Start the Daemon
+
+```bash
+sanctum daemon start
+```
+
+## Step 5: Restart Cursor
+
+Restart Cursor (Cmd+Shift+P → "Reload Window" or quit and reopen).
+
+Go to **Settings → MCP** and verify "sanctum" appears in the server list with a green status indicator.
+
+## Step 6: Test
+
+In Cursor's AI chat, ask:
+
+> "Use Sanctum to retrieve my OpenAI API key"
+
+Cursor's agent will:
+1. Call `sanctum_get_credential` via MCP
+2. Authenticate as `cursor-agent`
+3. Receive a time-limited lease
+4. Use the credential
+
+## Using Credentials in Code Generation
+
+You can also ask Cursor to use Sanctum when generating code:
+
+> "Create a Python script that calls the OpenAI API. Get the API key from Sanctum instead of using an environment variable."
+
+## Troubleshooting
+
+### Sanctum not appearing in MCP servers
+
+1. Make sure the daemon is running: `sanctum daemon status`
+2. Check that `.cursor/mcp.json` is valid JSON
+3. Restart Cursor completely (not just reload window)
+
+### "Access denied" errors
+
+Run a policy simulation:
+
+```bash
+sanctum policy simulate --agent cursor-agent --resource openai/api_key --action retrieve
+```

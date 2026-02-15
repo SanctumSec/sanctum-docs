@@ -1,0 +1,57 @@
+# sanctum init
+
+Initialize a new encrypted vault.
+
+## Usage
+
+```bash
+sanctum init [OPTIONS]
+```
+
+## Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--path <dir>` | Vault directory | `~/.sanctum/` |
+| `--keychain` | Cache master key in macOS Keychain | disabled |
+
+## Description
+
+Creates a new vault directory with:
+- An encrypted master key (AES-256-GCM, derived via Argon2id from your password)
+- An empty credential store (SQLite)
+- A tamper-evident audit log with HMAC chain initialized
+- File permissions set to `0700` (directory) and `0600` (files)
+
+## Example
+
+```bash
+sanctum init
+```
+
+```
+🔐 Creating new Sanctum vault...
+   Location: ~/.sanctum/
+
+Enter master password: ********
+Confirm master password: ********
+
+✅ Vault initialized successfully.
+   - Master key encrypted with AES-256-GCM
+   - Audit log initialized with HMAC chain
+   - Ready to store credentials
+```
+
+## With Keychain
+
+```bash
+sanctum init --keychain
+```
+
+On macOS, this caches the master key in the system Keychain, protected by Touch ID. The vault can be unlocked without re-entering the password.
+
+## Notes
+
+- If `~/.sanctum/` already exists, the command will fail (won't overwrite an existing vault)
+- Choose a strong master password — it protects the master key via Argon2id KDF
+- The master password is never stored; only a derived key is used for encryption

@@ -1,0 +1,76 @@
+# Authentication
+
+The SanctumAI API uses two authentication mechanisms:
+
+1. **Bearer token** — For human/admin access via the HTTP API
+2. **Ed25519 challenge-response** — For agent authentication via MCP/RPC
+
+## Bearer Token (Admin API)
+
+The daemon generates a Bearer token on startup:
+
+```bash
+sanctum daemon start
+# Prints: Token: sntm_abc123...
+```
+
+Use it in requests:
+
+```bash
+curl -H "Authorization: Bearer sntm_abc123..." \
+  http://localhost:7700/api/v1/credentials
+```
+
+The token is stored in `~/.sanctum/daemon.token` (permissions `0600`).
+
+## Challenge-Response (Agent Auth)
+
+Agents authenticate via Ed25519 challenge-response:
+
+### POST `/auth/challenge`
+
+Request a nonce for an agent to sign.
+
+```json
+{
+  "agent_name": "cursor-agent"
+}
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "challenge_id": "550e8400-e29b-41d4-a716-446655440000",
+    "nonce": "base64-encoded-random-bytes",
+    "expires_at": "2026-02-14T22:30:30Z"
+  }
+}
+```
+
+### POST `/auth/verify`
+
+Submit the signed challenge.
+
+```json
+{
+  "challenge_id": "550e8400-e29b-41d4-a716-446655440000",
+  "agent_name": "cursor-agent",
+  "signature": "base64-encoded-ed25519-signature"
+}
+```
+
+Response (success):
+
+```json
+{
+  "data": {
+    "session_id": "sess_abc123",
+    "agent_name": "cursor-agent",
+    "expires_at": "2026-02-14T23:30:00Z"
+  }
+}
+```
+
+The returned `session_id` is used for subsequent API calls as a Bearer token.

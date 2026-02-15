@@ -1,0 +1,85 @@
+# Policies
+
+SanctumAI uses a **deny-by-default** policy engine. Without an explicit policy granting access, agents cannot retrieve any credential.
+
+## Policy Structure
+
+```bash
+sanctum policy add <name> \
+  --principal "agent:<pattern>" \
+  --resources "<glob>,<glob>" \
+  --actions <action>[,<action>] \
+  --max-ttl <seconds>
+```
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| `name` | Unique policy identifier | `cursor-openai-access` |
+| `principal` | Agent identity pattern (glob) | `agent:cursor-*` |
+| `resources` | Credential path patterns (glob) | `openai/*,anthropic/*` |
+| `actions` | Allowed operations | `retrieve`, `list`, `store`, `delete` |
+| `max_ttl` | Maximum lease duration in seconds | `300` (5 minutes) |
+
+## Glob Patterns
+
+Both `principal` and `resources` support glob patterns:
+
+| Pattern | Matches |
+|---------|---------|
+| `agent:cursor-agent` | Exact match |
+| `agent:cursor-*` | `cursor-agent`, `cursor-dev`, `cursor-prod` |
+| `openai/*` | `openai/api_key`, `openai/org_id` |
+| `aws/prod/*` | `aws/prod/access_key`, `aws/prod/secret_key` |
+| `*` | Everything (use with extreme caution) |
+
+## Policy Evaluation
+
+When an agent requests a credential, the policy engine:
+
+1. Finds all policies where `principal` matches the agent name
+2. Finds all policies where `resources` matches the credential path
+3. Checks if the requested `action` is in the policy's allowed actions
+4. If any policy matches all three → **allow** (with the most restrictive `max_ttl`)
+5. If no policy matches → **deny**
+
+```
+Agent "cursor-agent" requests retrieve("openai/api_key")
+  │
+  ├─ Policy "cursor-access":
+  │    principal: agent:cursor-agent ✅
+  │    resources: openai/*          ✅
+  │    actions: retrieve            ✅
+  │    max_ttl: 300
+  │
+  └─ Result: ALLOW (lease TTL: 300s)
+```
+
+## Policy Simulation
+
+Test policies without making real requests:
+
+```bash
+sanctum policy simulate \
+  --agent cursor-agent \
+  --resource openai/api_key \
+  --action retrieve
+```
+
+```
+✅ ALLOWED by policy 'cursor-access'
+   Lease TTL: 300s
+```
+
+## Management Commands
+
+```bash
+sanctum policy add <name> ...    # Create a policy
+sanctum policy list              # List all policies
+sanctum policy remove <name>     # Delete a policy
+sanctum policy simulate ...      # Test a policy decision
+```
+
+
+> **Note:**
+**Principle of least privilege.** Grant the narrowest possible access. Use specific credential paths instead of wildcards where practical.
+

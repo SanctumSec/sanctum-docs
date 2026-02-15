@@ -1,0 +1,57 @@
+# sanctum mcp serve
+
+Start the MCP (Model Context Protocol) server for AI editor integration.
+
+## Usage
+
+```bash
+sanctum mcp serve [OPTIONS]
+```
+
+## Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--transport <type>` | Transport protocol: `stdio`, `http` | `stdio` |
+| `--port <port>` | HTTP port (when transport is `http`) | `7601` |
+
+## Description
+
+Starts an MCP server that AI editors (Cursor, Claude Desktop, Claude Code, Windsurf, VS Code) use to access the vault. The server exposes credential management as MCP tools.
+
+In `stdio` mode (default), the MCP server communicates over stdin/stdout — the AI editor launches it as a child process.
+
+## MCP Tools Exposed
+
+| Tool | Description |
+|------|-------------|
+| `sanctum_list_credentials` | List credentials accessible to the agent |
+| `sanctum_get_credential` | Retrieve a credential (creates a lease) |
+| `sanctum_store_credential` | Store a new credential |
+| `sanctum_delete_credential` | Delete a credential |
+| `sanctum_search_credentials` | Search by pattern |
+| `sanctum_get_audit_log` | View recent audit entries |
+| `sanctum_check_policy` | Simulate a policy decision |
+
+## Editor Configuration
+
+Add to your editor's MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "sanctum": {
+      "command": "sanctum",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
+```
+
+See [Connect to AI Tool](/getting-started/connect-ai-tool) for editor-specific paths.
+
+## Notes
+
+- The MCP server requires the daemon to be running (`sanctum daemon start`)
+- Every tool call goes through the full CRP flow: authentication → policy check → lease creation → audit log
+- The server identifies the calling agent by the registered agent identity configured for that editor

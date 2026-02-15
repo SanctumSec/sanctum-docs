@@ -1,0 +1,77 @@
+# Audit API
+
+## Query Audit Log
+
+```
+GET /api/v1/audit
+```
+
+**Query Parameters:**
+
+| Param | Description | Default |
+|-------|-------------|---------|
+| `agent` | Filter by agent name | all |
+| `resource` | Filter by resource path (glob) | all |
+| `action` | Filter by action type | all |
+| `since` | ISO 8601 timestamp | none |
+| `until` | ISO 8601 timestamp | none |
+| `limit` | Max entries to return | 100 |
+| `offset` | Pagination offset | 0 |
+
+**Response:**
+
+```json
+{
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "timestamp": "2026-02-14T22:30:01Z",
+      "event_type": "credential.retrieve",
+      "agent_name": "cursor-agent",
+      "resource": "openai/api_key",
+      "action": "retrieve",
+      "result": "allowed",
+      "hmac": "base64..."
+    }
+  ],
+  "meta": {
+    "total": 1247,
+    "limit": 100,
+    "offset": 0
+  }
+}
+```
+
+## Verify Chain Integrity
+
+```
+GET /api/v1/audit/verify
+```
+
+Verifies the HMAC chain integrity of the entire audit log.
+
+**Response:**
+
+```json
+{
+  "data": {
+    "valid": true,
+    "entries": 1247,
+    "first_entry": "2026-02-01T10:00:00Z",
+    "last_entry": "2026-02-14T22:30:01Z"
+  }
+}
+```
+
+If tampering is detected:
+
+```json
+{
+  "data": {
+    "valid": false,
+    "break_at_entry": 843,
+    "break_at_timestamp": "2026-02-09T15:22:00Z",
+    "message": "HMAC chain broken at entry 843"
+  }
+}
+```

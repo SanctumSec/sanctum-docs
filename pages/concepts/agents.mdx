@@ -1,0 +1,55 @@
+# Agents
+
+An agent is an AI identity registered with SanctumAI. Every AI tool that accesses your vault must be registered as an agent with a unique cryptographic identity.
+
+## Identity Model
+
+Each agent gets an **Ed25519 keypair** at registration:
+
+- **Private key** — Stored in `~/.sanctum/agents/<name>/` (file permissions `0600`)
+- **Public key** — Registered in the vault's agent registry
+
+When an agent connects via MCP, it proves its identity through **challenge-response authentication**: the daemon sends a random nonce, the agent signs it with its private key, and the daemon verifies the signature against the registered public key.
+
+## Registration
+
+```bash
+sanctum agent register my-agent --description "My AI assistant"
+```
+
+```
+✅ Agent 'my-agent' registered
+   Identity: Ed25519 keypair generated
+   Public key: dwP8...k4Fm
+   Config written to: ~/.sanctum/agents/my-agent/
+```
+
+## Agent Lifecycle
+
+| Command | Description |
+|---------|-------------|
+| `sanctum agent register <name>` | Create a new agent identity |
+| `sanctum agent list` | List all registered agents |
+| `sanctum agent remove <name>` | Revoke and delete an agent |
+
+When an agent is removed, its keypair is deleted and all active leases are immediately revoked.
+
+## Why Agent Identity Matters
+
+Without agent identity, you can't answer basic security questions:
+
+- *Which* AI tool accessed my OpenAI key at 3am?
+- Did Cursor or Claude Code make that API call?
+- Is a compromised extension exfiltrating my secrets?
+
+Agent identity gives you **attribution** — every secret access is tied to a specific, authenticated agent. Combined with policies, this means you can grant Cursor access to OpenAI keys but deny it access to your AWS credentials.
+
+## Agent Names
+
+Agent names support alphanumeric characters, hyphens, and underscores. They're used in policy `principal` fields with glob patterns:
+
+```
+agent:cursor-*          # Matches cursor-agent, cursor-dev, etc.
+agent:claude-code       # Exact match
+agent:*                 # All agents (use carefully)
+```

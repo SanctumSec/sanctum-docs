@@ -1,0 +1,82 @@
+# sanctum policy
+
+Manage access policies.
+
+## Subcommands
+
+### add
+
+Create a new access policy.
+
+```bash
+sanctum policy add <name> \
+  --principal "agent:<pattern>" \
+  --resources "<glob>,<glob>" \
+  --actions <action>[,<action>] \
+  --max-ttl <seconds>
+```
+
+```bash
+sanctum policy add cursor-access \
+  --principal "agent:cursor-agent" \
+  --resources "openai/*,anthropic/*" \
+  --actions retrieve \
+  --max-ttl 300
+```
+
+```
+✅ Policy 'cursor-access' created
+   Principal: agent:cursor-agent
+   Resources: openai/*, anthropic/*
+   Actions: retrieve
+   Max TTL: 300s
+```
+
+### list
+
+List all policies.
+
+```bash
+sanctum policy list
+```
+
+### remove
+
+Delete a policy.
+
+```bash
+sanctum policy remove <name>
+```
+
+### simulate
+
+Test a policy decision without making a real request.
+
+```bash
+sanctum policy simulate \
+  --agent <name> \
+  --resource <path> \
+  --action <action>
+```
+
+```bash
+sanctum policy simulate \
+  --agent cursor-agent \
+  --resource openai/api_key \
+  --action retrieve
+```
+
+```
+✅ ALLOWED by policy 'cursor-access'
+   Lease TTL: 300s
+```
+
+## Policy Fields
+
+| Field | Description |
+|-------|-------------|
+| `name` | Unique policy identifier |
+| `principal` | Agent pattern (glob): `agent:cursor-*` |
+| `resources` | Credential path patterns (glob, comma-separated) |
+| `actions` | `retrieve`, `list`, `store`, `delete` |
+| `max-ttl` | Maximum lease duration in seconds |

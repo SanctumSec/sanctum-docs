@@ -1,0 +1,117 @@
+# Rust SDK
+
+The Rust SDK (`sanctum-ai`) is the core implementation. All other SDKs are built on top of it.
+
+## Install
+
+```toml
+[dependencies]
+sanctum-ai = "0.3"
+```
+
+Or via CLI:
+
+```bash
+cargo add sanctum-ai
+```
+
+## Quick Start
+
+```rust
+use sanctum_ai::{Vault, AuditFilter, VaultError};
+
+fn main() -> Result<(), VaultError> {
+    // Create a new vault (or open an existing one)
+    let vault = Vault::init("/tmp/my-vault", b"strong-passphrase")?;
+
+    // Store a credential
+    vault.store("OPENAI_API_KEY", b"sk-abc123...", "my-agent", None)?;
+
+    // Retrieve it
+    let secret = vault.retrieve("OPENAI_API_KEY", "my-agent")?;
+    println!("Got: {}", String::from_utf8_lossy(&secret));
+
+    // List all credentials
+    let creds = vault.list_credentials("my-agent")?;
+    for cred in &creds {
+        println!("  {} (accessed {} times)", cred.path, cred.access_count);
+    }
+
+    // Check the audit trail
+    let entries = vault.audit_log(&AuditFilter::new().agent("my-agent"))?;
+    for entry in &entries {
+        println!("[{}] {} → {} ({})",
+            entry.agent_name, entry.action, entry.resource,
+            if entry.allowed { "allowed" } else { "denied" }
+        );
+    }
+
+    // Delete a credential
+    vault.delete("OPENAI_API_KEY", "my-agent")?;
+
+    Ok(())
+}
+```
+
+## Opening an Existing Vault
+
+```rust
+let vault = Vault::open("/tmp/my-vault")?;
+vault.unlock(b"strong-passphrase")?;
+
+let secret = vault.retrieve("OPENAI_API_KEY", "my-agent")?;
+```
+
+## Policy Enforcement
+
+```rust
+use sanctum_ai::Policy;
+
+let policy = Policy {
+    name: "openai-only-chatbot".into(),
+    principal: "agent:chatbot-*".into(),
+    resources: vec!["OPENAI_*".into()],
+    actions: vec![sanctum_ai::Action::Retrieve],
+    max_lease_ttl: 3600,
+    conditions: Default::default(),
+    enabled: true,
+};
+
+vault.store("OPENAI_API_KEY", b"sk-abc123...", "chatbot-v2", Some(&policy))?;
+
+// This works — agent matches "chatbot-*"
+let secret = vault.retrieve("OPENAI_API_KEY", "chatbot-v2")?;
+
+// This is denied — "rogue-agent" doesn't match the policy
+let result = vault.check_policy("rogue-agent", "OPENAI_API_KEY", &sanctum_ai::Action::Retrieve)?;
+assert!(!result.allowed);
+```
+
+## Feature Flags
+
+| Feature | Default | Description |
+|---------|---------|-------------|
+| `storage-sqlite` | ✅ | SQLite-backed persistent storage |
+| `storage-redb` | ❌ | redb-backed storage (WASI compatible) |
+| `filesystem` | ✅ | File I/O for env migration, scanning |
+| `cli` | ✅ | Terminal output formatting |
+| `tls` | ✅ | TLS support for network mode |
+| `keychain` | ✅ (macOS) | macOS Keychain integration |
+
+For WASM/WASI targets, disable defaults:
+
+```toml
+[dependencies]
+sanctum-ai = { version = "0.3", default-features = false, features = ["storage-redb", "filesystem"] }
+```
+
+## Requirements
+
+- Rust 1.75+ (stable)
+- No async runtime needed — fully synchronous API
+- No network calls — everything is local
+
+## References
+
+- [API docs on docs.rs](https://docs.rs/sanctum-ai)
+- [Source on GitHub](https://github.com/SanctumSec/sanctum)

@@ -1,0 +1,58 @@
+# Vaults
+
+A vault is the top-level encrypted container in SanctumAI. It holds credentials, agent identities, policies, and the audit log.
+
+## Architecture
+
+Every vault consists of two on-disk components:
+
+| File | Purpose |
+|------|---------|
+| `~/.sanctum/vault.sealed` | Encrypted blob containing the master DEK (data encryption key) |
+| `~/.sanctum/vault.db` | SQLite database with metadata, agents, policies, and audit entries |
+
+The vault uses **envelope encryption**: a master key encrypts individual data encryption keys (DEKs), and each credential gets its own unique DEK.
+
+## Encryption Model
+
+```
+Master Password
+      │
+      ▼ (Argon2id KDF)
+Passphrase Key
+      │
+      ▼ (AES-256-GCM)
+Master DEK ──────────────────────────────┐
+      │                                  │
+      ▼ (AES-256-GCM)                   ▼ (AES-256-GCM)
+┌──────────┐  ┌──────────┐  ┌──────────┐
+│ DEK-1    │  │ DEK-2    │  │ DEK-N    │
+│ (secret) │  │ (secret) │  │ (secret) │
+└──────────┘  └──────────┘  └──────────┘
+```
+
+- **Argon2id** derives the passphrase key from your master password (memory-hard, GPU-resistant)
+- **AES-256-GCM** provides authenticated encryption — tampering is detected
+- Each credential's DEK is unique — compromising one doesn't expose others
+
+## Vault States
+
+| State | Description |
+|-------|-------------|
+| **Sealed** | Vault exists but master key is not in memory. No operations possible. |
+| **Unlocked** | Master password provided, DEK loaded. Full read/write access. |
+| **Locked** | Master key zeroized from memory. Must unlock again. |
+
+The daemon manages vault state. When idle for a configurable period, the vault auto-locks.
+
+## macOS Keychain Integration
+
+On macOS, Sanctum can optionally cache the master key in the system Keychain, protected by Touch ID or your login password. This avoids re-entering the master password on every daemon restart.
+
+```bash
+sanctum init --keychain
+```
+
+## File Permissions
+
+All vault files are created with `0600` (owner read/write only). The `~/.sanctum/` directory is `0700`.

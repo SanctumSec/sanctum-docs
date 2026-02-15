@@ -1,0 +1,82 @@
+# Policies API
+
+## List Policies
+
+```
+GET /api/v1/policies
+```
+
+**Response:**
+
+```json
+{
+  "data": [
+    {
+      "name": "cursor-access",
+      "principal": "agent:cursor-agent",
+      "resources": ["openai/*", "anthropic/*"],
+      "actions": ["retrieve"],
+      "max_ttl": 300,
+      "created_at": "2026-02-10T23:19:00Z"
+    }
+  ]
+}
+```
+
+## Create Policy
+
+```
+POST /api/v1/policies
+```
+
+**Body:**
+
+```json
+{
+  "name": "cursor-access",
+  "principal": "agent:cursor-agent",
+  "resources": ["openai/*", "anthropic/*"],
+  "actions": ["retrieve"],
+  "max_ttl": 300
+}
+```
+
+**Response:** `201 Created`
+
+## Delete Policy
+
+```
+DELETE /api/v1/policies/:name
+```
+
+**Response:** `204 No Content`
+
+## Simulate Policy
+
+```
+POST /api/v1/policies/simulate
+```
+
+Test a policy decision without making a real access request.
+
+**Body:**
+
+```json
+{
+  "agent": "cursor-agent",
+  "resource": "openai/api_key",
+  "action": "retrieve"
+}
+```
+
+**Response:**
+
+```json
+{
+  "data": {
+    "allowed": true,
+    "policy_name": "cursor-access",
+    "lease_ttl": 300
+  }
+}
+```
